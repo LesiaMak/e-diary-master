@@ -1,0 +1,8 @@
+datacenter
+project
+.env
+manage.py
+Pipfile
+Pipfile.lock
+requirements.txt
+schoolbase.sqlite3
