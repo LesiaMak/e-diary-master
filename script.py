@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import MultipleObjectsReturned
 
 
-list_of_commendations = [
+COMMENDATIONS = [
 	'Молодец!',
 	'Отлично!',
 	'Хорошо!',
@@ -42,46 +42,31 @@ list_of_commendations = [
 	'Теперь у тебя точно все получится!'
 		]
 
-
-def fix_marks(schoolkid):	
+def get_student(schoolkid):
 	try:
 		child = Schoolkid.objects.get(full_name__contains=schoolkid)
-		Mark.objects.filter(schoolkid=child,points__lt=4).update(points=5)
 	except Schoolkid.DoesNotExist:
 		print("Такого имени не существует")
 	except Schoolkid.MultipleObjectsReturned:
 		print('Найдено больше 1 совпадений')
-    	
+	return child
+
+
+def fix_marks(schoolkid):
+	Mark.objects.filter(schoolkid=get_student(schoolkid),points__lt=4).update(points=5)
+
 
 
 def remove_chastisements(schoolkid):
-	try:
-		child = Schoolkid.objects.get(full_name__contains=schoolkid)
-		chastisements =  Chastisement.objects.filter(schoolkid=child)
+		chastisements =  Chastisement.objects.filter(schoolkid=get_student(schoolkid))
 		chastisements.delete()
-	except Schoolkid.DoesNotExist:
-		print("Такого имени не существует")
-	except Schoolkid.MultipleObjectsReturned:
-		print('Найдено больше 1 совпадений')
-
-
-	
 
 
 def create_commendation(schoolkid, subject):
 	try:
-		child = Schoolkid.objects.get(full_name__contains=schoolkid)
-		full_list = Lesson.objects.filter(group_letter=child.group_letter,year_of_study=child.year_of_study,subject__title=subject)
-		number = random.randint(0, full_list.count())
-		date  = full_list[number].date
-		subject_title = full_list[number].subject
-		teacher = full_list[number].teacher
-		commendation = list_of_commendations[random.randint(0, len(list_of_commendations))]
-		positive_comment = Commendation.objects.create(text=commendation,created=date,schoolkid=child,subject=subject_title,teacher=teacher)
-	except Schoolkid.DoesNotExist:
-		print("Такого имени не существует")
-	except Schoolkid.MultipleObjectsReturned:
-		print('Найдено больше 1 совпадений в имени ученика')
+		child = get_student(schoolkid)
+		lesson = Lesson.objects.filter(group_letter=child.group_letter,year_of_study=child.year_of_study,subject__title=subject).order_by(?).first()
+		positive_comment = Commendation.objects.create(text=random.choice(COMMENDATIONS),created=lesson.date,schoolkid=child,subject=lesson.subject,teacher=lesson.teacher)
 	except Lesson.DoesNotExist:
 		print("Такого предмета не существует")
 	return positive_comment
